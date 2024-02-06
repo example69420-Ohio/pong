@@ -18,6 +18,7 @@ clock = pygame.time.Clock()
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
+bgmusic = pygame.mixer.music.load('audio/gameoveraudio.mp3')
 def game_loop(score_required_to_win):
     keys = pygame.key.get_pressed()
     game_active = False
@@ -87,9 +88,9 @@ def game_loop(score_required_to_win):
                 finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
                 screen.blit(finalgame_surface, finalgame_rect)
                 if paddle_1.score == score_required_to_win:
-                    winner_surface = font1.render("player 2 won!", True, (255, 255, 255))
-                elif paddle_2.score == score_required_to_win:
                     winner_surface = font1.render("player 1 wins!", True, (255, 255, 255))
+                elif paddle_2.score == score_required_to_win:
+                    winner_surface = font1.render("player 2 won!", True, (255, 255, 255))
         
                 winner_rect = winner_surface.get_rect(center=(width / 2, height / 2 + 40)) # type: ignore
                 screen.blit(winner_surface, winner_rect) # type: ignore
@@ -319,6 +320,12 @@ class Ball:
 
     def set_y_high(self, num):
         self.y = num - self.radius
+
+
+
+class Particles:
+    def __init__(self):
+        ...
 
 # Call the game loop, with some initial amount. 
 game_loop(2)
