@@ -18,7 +18,8 @@ clock = pygame.time.Clock()
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
-bgmusic = pygame.mixer.music.load('audio/gameoveraudio.mp3')
+gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.mp3')
+
 def game_loop(score_required_to_win):
     keys = pygame.key.get_pressed()
     game_active = False
@@ -83,6 +84,7 @@ def game_loop(score_required_to_win):
                 menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
                 screen.blit(menutext_surface, menutext_rect)
             else:
+                gameovermusic.play(loops = -1)
                 finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
                                                (255, 255, 255))
                 finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
