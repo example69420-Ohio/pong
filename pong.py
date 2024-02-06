@@ -1,5 +1,3 @@
-from re import L
-from matplotlib.pylab import f
 import pygame
 import random
 
@@ -89,9 +87,9 @@ def game_loop(score_required_to_win):
                 finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
                 screen.blit(finalgame_surface, finalgame_rect)
                 if paddle_1.score == score_required_to_win:
-                    winner_surface = font1.render("player 1 wins!", True, (255, 255, 255))
-                elif paddle_2.score == score_required_to_win:
                     winner_surface = font1.render("player 2 won!", True, (255, 255, 255))
+                elif paddle_2.score == score_required_to_win:
+                    winner_surface = font1.render("player 1 wins!", True, (255, 255, 255))
         
                 winner_rect = winner_surface.get_rect(center=(width / 2, height / 2 + 40)) # type: ignore
                 screen.blit(winner_surface, winner_rect) # type: ignore
@@ -154,8 +152,8 @@ class Paddle:
                 self.y = 0
         elif keys[self.down_key]:
             self.y += self.speed * dt
-            if self.y > height - self.height:
-                self.y = height - self.height
+            if self.y > height - self.height/2:
+                self.y = height - self.height/2
 
     def draw(self):
         pygame.draw.rect(screen, self.color, [self.get_x_low(), self.get_y_low(), self.width, self.height],
@@ -164,17 +162,17 @@ class Paddle:
     # Later on, we will learn the Pythonic way to do it, but for now we will use more Java-style ones.
 
     def get_x_low(self):
-        return self.x - self.width / 4
+        return self.x - self.width / 2
 
     def get_x_high(self):
-        return self.x + self.width / 4
+        return self.x + self.width / 2
 
     def get_y_low(self):
         # This is actually the top of the figure (vertically inverted display)
-        return self.y - self.height / 4
+        return self.y - self.height / 2
 
     def get_y_high(self):
-        return self.y + self.height / 4
+        return self.y + self.height / 2
 
 
 class Ball:
@@ -323,4 +321,4 @@ class Ball:
         self.y = num - self.radius
 
 # Call the game loop, with some initial amount. 
-game_loop(1)
+game_loop(2)
