@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 
 pygame.init()
 pygame.display.set_caption('Pong')
@@ -18,7 +19,8 @@ clock = pygame.time.Clock()
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
-gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.mp3')
+bgmusic = pygame.mixer.Sound('audio/Minecraft (mp3cut.net).mp3')
+gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.wav')
 
 def game_loop(score_required_to_win):
     keys = pygame.key.get_pressed()
@@ -36,6 +38,7 @@ def game_loop(score_required_to_win):
                       down_key=pygame.K_DOWN, color=(100, 255, 100))
 
     ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=150, color=(0, 255, 255))
+    bgmusic.play(loops=-1)
     while True:
         # Exits game if pressed space or tries to quit. 
         for event in pygame.event.get():
@@ -74,6 +77,7 @@ def game_loop(score_required_to_win):
         # (Only watch it after you're done with rest of code)
             clock.tick(fps)
         else:
+            pygame.mixer.music.stop()
             screen.fill((0, 0, 0))
                             
             font_size = 32
@@ -84,7 +88,7 @@ def game_loop(score_required_to_win):
                 menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
                 screen.blit(menutext_surface, menutext_rect)
             else:
-                gameovermusic.play(loops = -1)
+                gameovermusic.play()
                 finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
                                                (255, 255, 255))
                 finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
@@ -113,6 +117,7 @@ def draw_scoreboard(score_1, score_2):
 
 
 def draw_background():
+    global width
     # Fill in the background color, with background_color. 
     #   Do this code first. 
     screen.fill(background_color)
@@ -122,7 +127,7 @@ def draw_background():
     #   Do this step after getting rest of code done. 
     for x in range(500):
         if x % 20 == 0:
-            pygame.draw.line(screen, (255,255,255), (395, x) , (395, x+10), 10)
+            pygame.draw.line(screen, (255,255,255), (width/2, x) , (width/2, x+10), 10)
 
 class Paddle:
     def __init__(self, *, x, y, paddle_width, paddle_height, speed, up_key, down_key, color=(255, 255, 255),
@@ -330,4 +335,4 @@ class Particles:
         ...
 
 # Call the game loop, with some initial amount. 
-game_loop(2)
+game_loop(25)
