@@ -12,6 +12,9 @@ screen = pygame.display.set_mode((width, height))
 
 background_color = (0, 0, 0)
 
+bgmusic = pygame.mixer.music.load('audio/Minecraft (mp3cut.net).mp3')
+gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.wav')
+
 # Make sure your game operates on same speed, regardless of fps. 
 fps = 120
 clock = pygame.time.Clock()
@@ -19,13 +22,11 @@ clock = pygame.time.Clock()
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
-# bgmusic = pygame.mixer.Sound('audio/Minecraft (mp3cut.net).mp3')
-# gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.wav')
-
 def game_loop(score_required_to_win):
     keys = pygame.key.get_pressed()
     game_active = False
     first_time = True
+    gameover = False
 
     # Use pygame.K_UP & pygame.K_DOWN for right paddle, and 
     #   pygame.K_w and pygame.K_s for left paddle
@@ -38,7 +39,7 @@ def game_loop(score_required_to_win):
                       down_key=pygame.K_DOWN, color=(100, 255, 100))
 
     ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=150, color=(0, 255, 255))
-    # bgmusic.play(loops=-1)
+    pygame.mixer.music.play(loops=-1)
     while True:
         # Exits game if pressed space or tries to quit. 
         for event in pygame.event.get():
@@ -52,13 +53,18 @@ def game_loop(score_required_to_win):
                     quit()
                 elif event.key == pygame.K_SPACE:
                     if not game_active or (not first_time and keys[pygame.K_SPACE]):
+                        gameovermusic.stop()
+                        pygame.mixer.music.play(loops=-1)
                         game_active = True
                         first_time = False
+                        gameover = False
         # Draw background 
         draw_background()
         if game_active:
         # Draw scoreboard 
             draw_scoreboard(score_1=paddle_1.score, score_2=paddle_2.score)
+
+            
         # Update the two paddles. 
             paddle_1.update(dt)
             paddle_2.update(dt)
@@ -78,7 +84,7 @@ def game_loop(score_required_to_win):
         # (Only watch it after you're done with rest of code)
             clock.tick(fps)
         else:
-            # pygame.mixer.music.stop()
+           
             screen.fill((0, 0, 0))
                             
             font_size = 32
@@ -89,7 +95,11 @@ def game_loop(score_required_to_win):
                 menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
                 screen.blit(menutext_surface, menutext_rect)
             else:
-                # gameovermusic.play()
+                if gameover is False:
+                    pygame.mixer.music.stop()
+                    gameovermusic.play()
+                    gameover = True
+
                 finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
                                                (255, 255, 255))
                 finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
@@ -336,4 +346,4 @@ class Particles:
         ...
 
 # Call the game loop, with some initial amount. 
-game_loop(25)
+game_loop(2)
