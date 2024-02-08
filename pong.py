@@ -1,3 +1,4 @@
+import glob
 import pygame
 import random
 import os
@@ -22,11 +23,18 @@ clock = pygame.time.Clock()
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
+pauseserf = pygame.image.load('graphics/pause.png')
+
 def game_loop(score_required_to_win):
+    global dt
+    global width
+    global height
     keys = pygame.key.get_pressed()
     game_active = False
     first_time = True
     gameover = False
+    countdownyes = False
+    paused = False
 
     # Use pygame.K_UP & pygame.K_DOWN for right paddle, and 
     #   pygame.K_w and pygame.K_s for left paddle
@@ -58,13 +66,22 @@ def game_loop(score_required_to_win):
                         game_active = True
                         first_time = False
                         gameover = False
+                        countdownyes = False
+                elif event.key == pygame.K_p:
+                    paused = True
+                    screen.fill((255, 255, 255))
+                    screen.blit(pauseserf, (height/2, width/2))
+
         # Draw background 
         draw_background()
-        if game_active:
+        if game_active and not paused:
+            if not countdownyes:
+                countdown()
+                countdownyes = True
         # Draw scoreboard 
             draw_scoreboard(score_1=paddle_1.score, score_2=paddle_2.score)
 
-            
+
         # Update the two paddles. 
             paddle_1.update(dt)
             paddle_2.update(dt)
@@ -139,6 +156,20 @@ def draw_background():
     for x in range(500):
         if x % 20 == 0:
             pygame.draw.line(screen, (255,255,255), (width/2, x) , (width/2, x+10), 10)
+
+def countdown():
+    global width
+    global height
+    global dt 
+    for countdown in range (3):
+        screen.fill(background_color)
+        countdownserf = font.render(f"{3 - countdown}", True, "white")
+        countdownrect = countdownserf.get_rect(center = (width / 2, height / 2))
+        screen.blit(countdownserf, countdownrect)
+        pygame.display.update()
+        pygame.time.wait(1000)
+    screen.fill(background_color)
+    pygame.display.update()
 
 class Paddle:
     def __init__(self, *, x, y, paddle_width, paddle_height, speed, up_key, down_key, color=(255, 255, 255),
