@@ -74,7 +74,7 @@ def game_loop(score_required_to_win):
 
         # Draw background 
         draw_background()
-        if game_active and not paused:
+        if game_active:
             if not countdownyes:
                 countdown()
                 countdownyes = True
@@ -101,33 +101,7 @@ def game_loop(score_required_to_win):
         # (Only watch it after you're done with rest of code)
             clock.tick(fps)
         else:
-           
-            screen.fill((0, 0, 0))
-                            
-            font_size = 32
-            font1 = pygame.font.Font('font/Pixeltype.ttf', font_size)
-            if first_time:
-                menutext_surface = font1.render(str("hola amigos, press space to start, esc to quit :< "), True,
-                                               (255, 255, 255))
-                menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
-                screen.blit(menutext_surface, menutext_rect)
-            else:
-                if gameover is False:
-                    pygame.mixer.music.stop()
-                    gameovermusic.play()
-                    gameover = True
-
-                finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
-                                               (255, 255, 255))
-                finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
-                screen.blit(finalgame_surface, finalgame_rect)
-                if paddle_1.score == score_required_to_win:
-                    winner_surface = font1.render("player 1 wins!", True, (255, 255, 255))
-                elif paddle_2.score == score_required_to_win:
-                    winner_surface = font1.render("player 2 won!", True, (255, 255, 255))
-        
-                winner_rect = winner_surface.get_rect(center=(width / 2, height / 2 + 40)) # type: ignore
-                screen.blit(winner_surface, winner_rect) # type: ignore
+            mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win)
 
             paddle_1.score = 0
             paddle_2.score = 0
@@ -170,6 +144,34 @@ def countdown():
         pygame.time.wait(1000)
     screen.fill(background_color)
     pygame.display.update()
+
+def mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win, winner_surface):
+    screen.fill((0, 0, 0))
+                            
+    font_size = 32
+    font1 = pygame.font.Font('font/Pixeltype.ttf', font_size)
+    if first_time:
+        menutext_surface = font1.render(str("hola amigos, press space to start, esc to quit :< "), True,
+                                               (255, 255, 255))
+        menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
+        screen.blit(menutext_surface, menutext_rect)
+    else:
+        if gameover is False:
+            pygame.mixer.music.stop()
+            gameovermusic.play()
+            gameover = True
+
+        finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
+                                               (255, 255, 255))
+        finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
+        screen.blit(finalgame_surface, finalgame_rect)
+        if paddle_1.score == score_required_to_win:
+            winner_surface = font1.render("player 1 wins!", True, (255, 255, 255))
+        elif paddle_2.score == score_required_to_win:
+            winner_surface = font1.render("player 2 won!", True, (255, 255, 255))
+        
+        winner_rect = winner_surface.get_rect(center=(width / 2, height / 2 + 40)) # type: ignore
+        screen.blit(winner_surface, winner_rect) # type: ignore
 
 class Paddle:
     def __init__(self, *, x, y, paddle_width, paddle_height, speed, up_key, down_key, color=(255, 255, 255),
@@ -223,7 +225,6 @@ class Paddle:
 
     def get_y_high(self):
         return self.y + self.height / 2
-
 
 class Ball:
     def __init__(self, *, x, y, radius, speed_x, color=(255, 255, 255), border_width=0):
@@ -369,8 +370,6 @@ class Ball:
 
     def set_y_high(self, num):
         self.y = num - self.radius
-
-
 
 class Particles:
     def __init__(self):
