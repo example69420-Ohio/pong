@@ -145,7 +145,9 @@ def countdown():
     screen.fill(background_color)
     pygame.display.update()
 
-def mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win, winner_surface):
+def mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win, winner_surface=None):
+
+    winner_text = None
     screen.fill((0, 0, 0))
                             
     font_size = 32
@@ -166,12 +168,15 @@ def mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win, wi
         finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
         screen.blit(finalgame_surface, finalgame_rect)
         if paddle_1.score == score_required_to_win:
-            winner_surface = font1.render("player 1 wins!", True, (255, 255, 255))
+            winner_text = "player 1 wins!"
         elif paddle_2.score == score_required_to_win:
-            winner_surface = font1.render("player 2 won!", True, (255, 255, 255))
+            winner_text = "player 2 won!"
         
+        winner_surface = font1.render(winner_text, True, (255,255,255))
         winner_rect = winner_surface.get_rect(center=(width / 2, height / 2 + 40)) # type: ignore
         screen.blit(winner_surface, winner_rect) # type: ignore
+
+
 
 class Paddle:
     def __init__(self, *, x, y, paddle_width, paddle_height, speed, up_key, down_key, color=(255, 255, 255),
