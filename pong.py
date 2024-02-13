@@ -1,4 +1,7 @@
+from ast import main
 import glob
+from math import sin
+from tracemalloc import start
 import pygame
 import random
 import os
@@ -15,9 +18,9 @@ background_color = (0, 0, 0)
 
 bgmusic = pygame.mixer.music.load('audio/Minecraft (mp3cut.net).mp3')
 gameovermusic = pygame.mixer.Sound('audio/gameoveraudio.wav')
-
+mainmenumusic = pygame.mixer.Sound('audio/cosmos_adrift.mp3')
 # Make sure your game operates on same speed, regardless of fps. 
-fps = 120
+fps = 60
 clock = pygame.time.Clock()
 
 font_size = 72
@@ -40,7 +43,7 @@ def game_loop(score_required_to_win):
     #   pygame.K_w and pygame.K_s for left paddle
     
     # Initialize 2 paddles, and one ball variable 
-    dt = clock.tick(fps)/1000
+    dt = 1/fps
     paddle_1 = Paddle(x=50, y=height / 2, paddle_width=5, paddle_height=60, speed=400, up_key=pygame.K_w,
                       down_key=pygame.K_s, color=(255, 100, 100))
     paddle_2 = Paddle(x=width - 50, y=height / 2, paddle_width=5, paddle_height=60, speed=400, up_key=pygame.K_UP,
@@ -74,40 +77,31 @@ def game_loop(score_required_to_win):
 
         # Draw background 
         draw_background()
-        if game_active:
-            if not countdownyes:
-                countdown()
-                countdownyes = True
+        if not countdownyes:
+            countdown()
+            countdownyes = True
         # Draw scoreboard 
-            draw_scoreboard(score_1=paddle_1.score, score_2=paddle_2.score)
+        draw_scoreboard(score_1=paddle_1.score, score_2=paddle_2.score)
 
 
         # Update the two paddles. 
-            paddle_1.update(dt)
-            paddle_2.update(dt)
+        paddle_1.update(dt)
+        paddle_2.update(dt)
 
         # Update the ball 
-            ball.update(dt, paddle_left=paddle_1, paddle_right=paddle_2)
+        ball.update(dt, paddle_left=paddle_1, paddle_right=paddle_2)
 
         # Check if a player has won, and if so print which player won, and exit the game (return). 
         #   This should take <10 lines of code (assuming you don't make it more fancy)
-            if paddle_1.score == score_required_to_win or paddle_2.score == score_required_to_win:
-                game_active = False
+        if paddle_1.score == score_required_to_win or paddle_2.score == score_required_to_win:
+            game_active = False
         
         # This is neccessary code to see screen updated. 
-            pygame.display.update()
+        pygame.display.update()
         # This is so your game is run at a certain speed. 
         # See: https://www.youtube.com/watch?v=rWtfClpWSb8 for how to achieve true framerate independence. 
         # (Only watch it after you're done with rest of code)
-            clock.tick(fps)
-        else:
-            mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win)
-
-            paddle_1.score = 0
-            paddle_2.score = 0
-
-            # Update the display
-            pygame.display.update()
+        clock.tick(fps)
 
 def draw_scoreboard(score_1, score_2):
     amount_offset_x = 50
@@ -136,6 +130,11 @@ def countdown():
     global height
     global dt 
     for countdown in range (3):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return 
         screen.fill(background_color)
         countdownserf = font.render(f"{3 - countdown}", True, "white")
         countdownrect = countdownserf.get_rect(center = (width / 2, height / 2))
@@ -145,38 +144,32 @@ def countdown():
     screen.fill(background_color)
     pygame.display.update()
 
-def mainmenu(first_time, gameover, paddle_1, paddle_2, score_required_to_win, winner_surface=None):
+def mainmenu(score):
+    n = 1
+    mainmenumusic.play(loops=-1)
+    font_size1 = 32
+    font1 = pygame.font.Font('font/Pixeltype.ttf', font_size1)
+    font_size2 = 64
+    font2 = pygame.font.Font('font/Pixeltype.ttf', font_size2)
+    while True:
+        screen.fill((0, 0, 0))
+        pongserf = font2.render("PONG", False, (255, 255, 255))
+        rotated_pongserf = pygame.transform.rotate(pongserf, sin(n)) 
+        screen.blit(rotated_pongserf, (350, 100))
 
-    winner_text = None
-    screen.fill((0, 0, 0))
-                            
-    font_size = 32
-    font1 = pygame.font.Font('font/Pixeltype.ttf', font_size)
-    if first_time:
-        menutext_surface = font1.render(str("hola amigos, press space to start, esc to quit :< "), True,
-                                               (255, 255, 255))
-        menutext_rect = menutext_surface.get_rect(center=(width / 2, height / 2))
-        screen.blit(menutext_surface, menutext_rect)
-    else:
-        if gameover is False:
-            pygame.mixer.music.stop()
-            gameovermusic.play()
-            gameover = True
-
-        finalgame_surface = font1.render(str("hola amigos, press space to play again, esc to quit :< "), True,
-                                               (255, 255, 255))
-        finalgame_rect = finalgame_surface.get_rect(center=(width / 2, height / 2))
-        screen.blit(finalgame_surface, finalgame_rect)
-        if paddle_1.score == score_required_to_win:
-            winner_text = "player 1 wins!"
-        elif paddle_2.score == score_required_to_win:
-            winner_text = "player 2 won!"
-        
-        winner_surface = font1.render(winner_text, True, (255,255,255))
-        winner_rect = winner_surface.get_rect(center=(width / 2, height / 2 + 40)) # type: ignore
-        screen.blit(winner_surface, winner_rect) # type: ignore
-
-
+        start = Button(width/2, height/2, 100, 40, 10, (255, 255, 255), 'start', font1, (0,0,0))
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if start.is_over(pos):
+                        mainmenumusic.stop()
+                        game_loop(score)
+        n+=10
+        start.draw(screen)
+        pygame.display.update()
 
 class Paddle:
     def __init__(self, *, x, y, paddle_width, paddle_height, speed, up_key, down_key, color=(255, 255, 255),
@@ -380,5 +373,34 @@ class Particles:
     def __init__(self):
         ...
 
+class Button(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, radius, color, text, font, text_color):
+        super().__init__()  # Call superclass constructor
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.radius = radius
+        self.color = color
+        self.text = text
+        self.font = font
+        self.text_color = text_color
+
+    def draw_rounded_rect(self, screen):
+        rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        pygame.draw.rect(screen, self.color, rect, border_radius=self.radius)
+        text_surface = self.font.render(self.text, True, self.text_color)
+        text_rect = text_surface.get_rect(center=rect.center)
+        screen.blit(text_surface, text_rect)
+
+    def draw(self, screen):
+        self.draw_rounded_rect(screen)
+
+    def is_over(self, pos):
+        if pos[0] > self.x and pos[0] < self.x + self.width:
+            if pos[1] > self.y and pos[1] < self.y + self.height:
+                return True
+        return False
+
 # Call the game loop, with some initial amount. 
-game_loop(2)
+mainmenu(2)
