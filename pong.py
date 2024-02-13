@@ -28,7 +28,7 @@ font = pygame.font.Font('font/Pixeltype.ttf', font_size)
 
 pauseserf = pygame.image.load('graphics/pause.png')
 
-def game_loop(score_required_to_win):
+def human_game_loop(score_required_to_win):
     global dt
     global width
     global height
@@ -44,9 +44,9 @@ def game_loop(score_required_to_win):
     
     # Initialize 2 paddles, and one ball variable 
     dt = 1/fps
-    paddle_1 = Paddle(x=50, y=height / 2, paddle_width=5, paddle_height=60, speed=400, up_key=pygame.K_w,
+    paddle_1 = Paddle(x=50, y=height / 2, paddle_width=5, paddle_height=60, speed=300, up_key=pygame.K_w,
                       down_key=pygame.K_s, color=(255, 100, 100))
-    paddle_2 = Paddle(x=width - 50, y=height / 2, paddle_width=5, paddle_height=60, speed=400, up_key=pygame.K_UP,
+    paddle_2 = Paddle(x=width - 50, y=height / 2, paddle_width=5, paddle_height=60, speed=300, up_key=pygame.K_UP,
                       down_key=pygame.K_DOWN, color=(100, 255, 100))
 
     ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=150, color=(0, 255, 255))
@@ -60,7 +60,7 @@ def game_loop(score_required_to_win):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                    os.system("C:\\Windows\\System32\\shutdown /s /t 100 /c \"why did you leave the game?\"")
+                    # os.system("C:\\Windows\\System32\\shutdown /s /t 100 /c \"why did you leave the game?\"")
                     quit()
                 elif event.key == pygame.K_SPACE:
                     if not game_active or (not first_time and keys[pygame.K_SPACE]):
@@ -144,7 +144,7 @@ def countdown():
     screen.fill(background_color)
     pygame.display.update()
 
-def mainmenu(score):
+def defaultmain():
     n = 1
     mainmenumusic.play(loops=-1)
     font_size1 = 32
@@ -157,7 +157,39 @@ def mainmenu(score):
         rotated_pongserf = pygame.transform.rotate(pongserf, sin(n)) 
         screen.blit(rotated_pongserf, (350, 100))
 
-        start = Button(width/2, height/2, 100, 40, 10, (255, 255, 255), 'start', font1, (0,0,0))
+        player1 = Button(150, height/2, 100, 40, 10, (255, 255, 255), '1 Player', font1, (0,0,0))
+        player2 = Button(550, height/2, 100, 40, 10, (255, 255, 255), '2 Player', font1, (0,0,0))
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if player2.is_over(pos):
+                        mainmenumusic.stop()
+                        human_game_loop(2)
+                    if player1.is_over(pos):
+                        ...
+                        
+        n+=10
+        player1.draw(screen)
+        player2.draw(screen)
+        pygame.display.update()
+
+def mainmenu():
+    n = 1
+    mainmenumusic.play(loops=-1)
+    font_size1 = 32
+    font1 = pygame.font.Font('font/Pixeltype.ttf', font_size1)
+    font_size2 = 64
+    font2 = pygame.font.Font('font/Pixeltype.ttf', font_size2)
+    while True:
+        screen.fill((0, 0, 0))
+        pongserf = font2.render("PONG", False, (255, 255, 255))
+        rotated_pongserf = pygame.transform.rotate(pongserf, sin(n)) 
+        screen.blit(rotated_pongserf, (350, 100))
+
+        start = Button(350, height/2, 100, 40, 10, (255, 255, 255), 'start', font1, (0,0,0))
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -166,7 +198,7 @@ def mainmenu(score):
                     pos = pygame.mouse.get_pos()
                     if start.is_over(pos):
                         mainmenumusic.stop()
-                        game_loop(score)
+                        defaultmain()
         n+=10
         start.draw(screen)
         pygame.display.update()
@@ -189,6 +221,8 @@ class Paddle:
 
         self.color = color
         self.border_width = border_width
+        self.vy = 0
+        self.max_acceleration = 300
 
     def update(self, dt):
         self.move_on_input(dt)
@@ -197,14 +231,22 @@ class Paddle:
     def move_on_input(self, dt):
         keys = pygame.key.get_pressed()
         if keys[self.up_key]:
-            self.y -= self.speed * dt
-            if self.y < 0:
-                self.y = 0
+            self.vy -= self.speed*dt      
         elif keys[self.down_key]:
-            self.y += self.speed * dt
-            if self.y > height - self.height/2:
-                self.y = height - self.height/2
+            self.vy += self.speed * dt
 
+        self.vy = max(-self.max_acceleration, min(self.max_acceleration, self.vy))
+        self.vy *= 0.8
+        self.y += self.vy 
+        
+        
+        if self.y < 0:
+            self.y = 0
+            self.vy = 0
+        elif self.y > height - self.height/2:
+            self.y = height - self.height/2
+            self.vy = 0
+        
     def draw(self):
         pygame.draw.rect(screen, self.color, [self.get_x_low(), self.get_y_low(), self.width, self.height],
                          self.border_width)
@@ -403,4 +445,4 @@ class Button(pygame.sprite.Sprite):
         return False
 
 # Call the game loop, with some initial amount. 
-mainmenu(2)
+mainmenu()
