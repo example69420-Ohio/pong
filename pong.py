@@ -35,9 +35,8 @@ def human_game_loop(score_required_to_win):
     keys = pygame.key.get_pressed()
     game_active = False
     first_time = True
-    gameover = False
     countdownyes = False
-    paused = False
+    ballspeed = 150
 
     # Use pygame.K_UP & pygame.K_DOWN for right paddle, and 
     #   pygame.K_w and pygame.K_s for left paddle
@@ -49,7 +48,7 @@ def human_game_loop(score_required_to_win):
     paddle_2 = Paddle(x=width - 50, y=height / 2, paddle_width=5, paddle_height=60, speed=300, up_key=pygame.K_UP,
                       down_key=pygame.K_DOWN, color=(100, 255, 100))
 
-    ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=150, color=(0, 255, 255))
+    ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=ballspeed, color=(0, 255, 255))
     pygame.mixer.music.play(loops=-1)
     while True:
         # Exits game if pressed space or tries to quit. 
@@ -68,7 +67,6 @@ def human_game_loop(score_required_to_win):
                         pygame.mixer.music.play(loops=-1)
                         game_active = True
                         first_time = False
-                        gameover = False
                         countdownyes = False
                 elif event.key == pygame.K_p:
                     paused = True
@@ -93,8 +91,10 @@ def human_game_loop(score_required_to_win):
 
         # Check if a player has won, and if so print which player won, and exit the game (return). 
         #   This should take <10 lines of code (assuming you don't make it more fancy)
-        if paddle_1.score == score_required_to_win or paddle_2.score == score_required_to_win:
-            game_active = False
+        if paddle_1.score == score_required_to_win:
+            gameover(1, score_required_to_win)
+        elif paddle_2.score == score_required_to_win:
+            gameover(2, score_required_to_win)
         
         # This is neccessary code to see screen updated. 
         pygame.display.update()
@@ -144,7 +144,57 @@ def countdown():
     screen.fill(background_color)
     pygame.display.update()
 
-def defaultmain():
+def fade_text(text_surface, fade_speed=2):
+    # Create a copy of the text surface
+    faded_surface = text_surface.copy()
+    # Gradually decrease the alpha value of the copied surface
+    alpha = 255
+    while alpha > 0:
+        faded_surface.set_alpha(alpha)
+        screen.fill((0, 0, 0))
+        screen.blit(faded_surface, (width/2 - 170 , height/2))
+        pygame.display.flip()
+        alpha -= fade_speed
+        pygame.time.delay(20)
+
+def gameover(whowins, score_to_win):
+    screen.fill((0,0,0))
+    font_size1 = 32
+    font1 = pygame.font.Font('font/Pixeltype.ttf', font_size1)
+    font_size2 = 64
+    font2 = pygame.font.Font('font/Pixeltype.ttf', font_size2)
+    gameovermusic.play()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    cya = font2.render("SEE YOU NEXT TIME", False, (255, 255, 255))
+                    fade_text(cya)
+                    pygame.quit()
+                    quit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = pygame.mouse.get_pos()
+                if replay.is_over(pos):
+                    mainmenu(score_to_win)
+                    
+        replay = Button(350, height/2, 100, 40, 10, (255, 255, 255), 'replay', font1, (0,0,0))
+
+        if whowins == 1:
+            winner = font1.render("Player 1 wins!", False, (255, 255, 255))
+        elif whowins == 2:
+            winner = font1.render("Player 2 won!", False, (255,255,255))
+        
+        winnerrect = winner.get_rect(center = (width/2, height/2 - 100))
+        replay.draw(screen)
+        screen.blit(winner, winnerrect)
+        pygame.display.update()
+
+
+def defaultmain(score_to_win):
     n = 1
     mainmenumusic.play(loops=-1)
     font_size1 = 32
@@ -167,7 +217,7 @@ def defaultmain():
                     pos = pygame.mouse.get_pos()
                     if player2.is_over(pos):
                         mainmenumusic.stop()
-                        human_game_loop(2)
+                        human_game_loop(score_to_win)
                     if player1.is_over(pos):
                         ...
                         
@@ -176,7 +226,7 @@ def defaultmain():
         player2.draw(screen)
         pygame.display.update()
 
-def mainmenu():
+def mainmenu(score_to_win):
     n = 1
     mainmenumusic.play(loops=-1)
     font_size1 = 32
@@ -198,7 +248,7 @@ def mainmenu():
                     pos = pygame.mouse.get_pos()
                     if start.is_over(pos):
                         mainmenumusic.stop()
-                        defaultmain()
+                        defaultmain(score_to_win)
         n+=10
         start.draw(screen)
         pygame.display.update()
@@ -236,7 +286,7 @@ class Paddle:
             self.vy += self.speed * dt
 
         self.vy = max(-self.max_acceleration, min(self.max_acceleration, self.vy))
-        self.vy *= 0.8
+        self.vy *= 0.8 
         self.y += self.vy 
         
         
@@ -279,8 +329,10 @@ class Ball:
         # Initialize some velocity variables (one for x velocity, one for y)
         #   set the y velocity to be some multiple of the x velocity. 
         #   use sensible naming
-        self.vx = speed_x
+        self.initialx =speed_x
+        self.vx = speed_x 
         self.vy = self.vx * random.uniform(1, 2)
+        self.speed_increase_rate = 0.1
 
         # Initialize radius, speed_x, color, and border_width class variables. 
         self.radius = radius
@@ -291,11 +343,11 @@ class Ball:
         self.move(dt)
         self.account_for_vertical_screen_collision()
         self.account_score_increases(paddle_left, paddle_right)
-        # self.does_collide(paddle_right)
-        # self.does_collide(paddle_left)
+        self.vx += self.speed_increase_rate * dt
         self.account_for_paddle_collision(paddle_right)
         self.account_for_paddle_collision(paddle_left)
         self.draw()
+
 
     def move(self, dt):
         self.x += self.vx * dt
@@ -306,6 +358,12 @@ class Ball:
         elif self.y > height - self.radius:
             self.y = height - self.radius
             self.vy = -self.vy
+
+    def speedreset(self):
+        self.vx = self.initialx
+        self.vy = self.vx * random.uniform(1, 2)
+
+
     def draw(self):
         # Draw a pygame circle, with the self.color, self.x, self.y, self.radius, and self.border_width
         #   use the (global) screen variable. 
@@ -324,6 +382,7 @@ class Ball:
 
         # Negates x velocity, if collides with a paddle
         self.vx = -self.vx
+        self.vy += paddle.vy
 
     def account_for_vertical_screen_collision(self):
         if self.get_y_low() < 0:
@@ -445,4 +504,4 @@ class Button(pygame.sprite.Sprite):
         return False
 
 # Call the game loop, with some initial amount. 
-mainmenu()
+mainmenu(2)
