@@ -278,25 +278,51 @@ class Paddle:
         self.move_on_input(dt)
         self.draw()
 
+    # def move_on_input(self, dt):
+    #     keys = pygame.key.get_pressed()
+    #     if keys[self.up_key]:
+    #         self.vy -= self.speed*dt      
+    #     elif keys[self.down_key]:
+    #         self.vy += self.speed * dt
+
+    #     self.vy = max(-self.max_acceleration, min(self.max_acceleration, self.vy))
+    #     self.vy *= 0.8 
+    #     self.y += self.vy 
+        
+        
+    #     if self.y < self.height / 2:
+    #         self.y = self.height / 2
+    #         self.vy = 0
+    #     elif self.y > height - self.height/2:
+    #         self.y = height - self.height/2
+    #         self.vy = 0
     def move_on_input(self, dt):
         keys = pygame.key.get_pressed()
-        if keys[self.up_key]:
-            self.vy -= self.speed*dt      
-        elif keys[self.down_key]:
-            self.vy += self.speed * dt
+    
+        acceleration = self.speed + 800
+        deceleration = 800 
 
-        self.vy = max(-self.max_acceleration, min(self.max_acceleration, self.vy))
-        self.vy *= 0.8 
-        self.y += self.vy 
-        
-        
-        if self.y < 0:
-            self.y = 0
+        if keys[self.up_key]:
+            self.vy -= acceleration * dt
+        elif keys[self.down_key]:
+            self.vy += acceleration * dt
+        else:
+            if self.vy > 0:
+                self.vy -= deceleration * dt
+            elif self.vy < 0:
+                self.vy += deceleration * dt
+
+        self.vy *= 0.5**dt 
+
+        self.y += self.vy * dt
+
+        if self.y < self.height / 2:
+            self.y = self.height / 2
             self.vy = 0
-        elif self.y > height - self.height/2:
-            self.y = height - self.height/2
+        elif self.y > height - self.height / 2:
+            self.y = height - self.height / 2
             self.vy = 0
-        
+            
     def draw(self):
         pygame.draw.rect(screen, self.color, [self.get_x_low(), self.get_y_low(), self.width, self.height],
                          self.border_width)
