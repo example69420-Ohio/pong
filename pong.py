@@ -1,7 +1,6 @@
 from ast import main
 import glob
 from math import sin
-from tracemalloc import start
 import pygame
 import random
 import os
@@ -25,7 +24,7 @@ clock = pygame.time.Clock()
 
 font_size = 72
 font = pygame.font.Font('font/Pixeltype.ttf', font_size)
-
+paused = False
 pauseserf = pygame.image.load('graphics/pause.png')
 
 def human_game_loop(score_required_to_win):
@@ -51,57 +50,131 @@ def human_game_loop(score_required_to_win):
     ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=ballspeed, color=(0, 255, 255))
     pygame.mixer.music.play(loops=-1)
     while True:
-        # Exits game if pressed space or tries to quit. 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+        pause()
+
+        if not paused:
+
+            # Exits game if pressed space or tries to quit. 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     pygame.quit()
-                    # os.system("C:\\Windows\\System32\\shutdown /s /t 100 /c \"why did you leave the game?\"")
                     quit()
-                elif event.key == pygame.K_SPACE:
-                    if not game_active or (not first_time and keys[pygame.K_SPACE]):
-                        gameovermusic.stop()
-                        pygame.mixer.music.play(loops=-1)
-                        game_active = True
-                        first_time = False
-                        countdownyes = False
-                elif event.key == pygame.K_p:
-                    paused = True
-                    screen.fill((255, 255, 255))
-                    screen.blit(pauseserf, (height/2, width/2))
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        # os.system("C:\\Windows\\System32\\shutdown /s /t 100 /c \"why did you leave the game?\"")
+                        quit()
+                    elif event.key == pygame.K_SPACE:
+                        if not game_active or (not first_time and keys[pygame.K_SPACE]):
+                            gameovermusic.stop()
+                            pygame.mixer.music.play(loops=-1)
+                            game_active = True
+                            first_time = False
+                            countdownyes = False
 
-        # Draw background 
-        draw_background()
-        if not countdownyes:
-            countdown()
-            countdownyes = True
-        # Draw scoreboard 
-        draw_scoreboard(score_1=paddle_1.score, score_2=paddle_2.score)
+            # Draw background 
+            draw_background()
+            if not countdownyes:
+                countdown()
+                countdownyes = True
+            # Draw scoreboard 
+            draw_scoreboard(score_1=paddle_1.score, score_2=paddle_2.score)
 
 
-        # Update the two paddles. 
-        paddle_1.update(dt)
-        paddle_2.update(dt)
+            # Update the two paddles. 
+            paddle_1.update(dt)
+            paddle_2.update(dt)
 
-        # Update the ball 
-        ball.update(dt, paddle_left=paddle_1, paddle_right=paddle_2)
+            # Update the ball 
+            ball.update(dt, paddle_left=paddle_1, paddle_right=paddle_2)
 
-        # Check if a player has won, and if so print which player won, and exit the game (return). 
-        #   This should take <10 lines of code (assuming you don't make it more fancy)
-        if paddle_1.score == score_required_to_win:
-            gameover(1, score_required_to_win)
-        elif paddle_2.score == score_required_to_win:
-            gameover(2, score_required_to_win)
-        
-        # This is neccessary code to see screen updated. 
-        pygame.display.update()
-        # This is so your game is run at a certain speed. 
-        # See: https://www.youtube.com/watch?v=rWtfClpWSb8 for how to achieve true framerate independence. 
-        # (Only watch it after you're done with rest of code)
-        clock.tick(fps)
+            # Check if a player has won, and if so print which player won, and exit the game (return). 
+            #   This should take <10 lines of code (assuming you don't make it more fancy)
+            if paddle_1.score == score_required_to_win:
+                gameover(1, score_required_to_win)
+            elif paddle_2.score == score_required_to_win:
+                gameover(2, score_required_to_win)
+            
+            # This is neccessary code to see screen updated. 
+            pygame.display.update()
+            # This is so your game is run at a certain speed. 
+            # See: https://www.youtube.com/watch?v=rWtfClpWSb8 for how to achieve true framerate independence. 
+            # (Only watch it after you're done with rest of code)
+            clock.tick(fps)
+
+def ai_game_loop(score_required_to_win):
+    global dt
+    global width
+    global height
+    keys = pygame.key.get_pressed()
+    game_active = False
+    first_time = True
+    countdownyes = False
+    ballspeed = 150
+
+    # Use pygame.K_UP & pygame.K_DOWN for right paddle, and 
+    #   pygame.K_w and pygame.K_s for left paddle
+    
+    # Initialize 2 paddles, and one ball variable 
+    dt = 1/fps
+    paddle_1 = Paddle(x=50, y=height / 2, paddle_width=5, paddle_height=60, speed=300, up_key=pygame.K_w,
+                      down_key=pygame.K_s, color=(255, 100, 100))
+    ai_player = AIPlayer(x=width - 50, y=height / 2, paddle_width=5, paddle_height=60, speed=300,
+                     up_key=pygame.K_UP, down_key=pygame.K_DOWN, color=(100, 255, 100))
+
+    ball = Ball(x=width / 2, y=height / 2, radius=10, speed_x=ballspeed, color=(0, 255, 255))
+    pygame.mixer.music.play(loops=-1)
+    while True:
+        pause()
+
+        if not paused:
+            # Exits game if pressed space or tries to quit. 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        # os.system("C:\\Windows\\System32\\shutdown /s /t 100 /c \"why did you leave the game?\"")
+                        quit()
+                    elif event.key == pygame.K_SPACE:
+                        if not game_active or (not first_time and keys[pygame.K_SPACE]):
+                            gameovermusic.stop()
+                            pygame.mixer.music.play(loops=-1)
+                            game_active = True
+                            first_time = False
+                            countdownyes = False
+
+            # Draw background 
+            draw_background()
+            if not countdownyes:
+                countdown()
+                countdownyes = True
+            # Draw scoreboard 
+            draw_scoreboard(score_1=paddle_1.score, score_2=ai_player.paddle.score)
+
+
+            # Update the two paddles. 
+            paddle_1.update(dt)
+            ai_player.update(dt, ball)
+
+            # Update the ball 
+            ball.update(dt, paddle_left=paddle_1, paddle_right=ai_player.paddle)
+
+            # Check if a player has won, and if so print which player won, and exit the game (return). 
+            #   This should take <10 lines of code (assuming you don't make it more fancy)
+            if paddle_1.score == score_required_to_win:
+                gameover(1, score_required_to_win)
+            elif ai_player.paddle.score == score_required_to_win:
+                gameover(2, score_required_to_win)
+            
+            # This is neccessary code to see screen updated. 
+            pygame.display.update()
+            # This is so your game is run at a certain speed. 
+            # See: https://www.youtube.com/watch?v=rWtfClpWSb8 for how to achieve true framerate independence. 
+            # (Only watch it after you're done with rest of code)
+            clock.tick(fps)
 
 def draw_scoreboard(score_1, score_2):
     amount_offset_x = 50
@@ -110,7 +183,6 @@ def draw_scoreboard(score_1, score_2):
         text_surface = font.render(str(score), True, "white")
         text_rect = text_surface.get_rect(center=(width // 2 + dx, amount_offset_y))
         screen.blit(text_surface, text_rect)
-
 
 def draw_background():
     global width
@@ -143,6 +215,26 @@ def countdown():
         pygame.time.wait(1000)
     screen.fill(background_color)
     pygame.display.update()
+
+def pause():
+    global paused
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                paused = not paused
+                if paused:
+                    pygame.mixer.music.pause()  
+                else:
+                    pygame.mixer.music.unpause()  
+            elif event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                quit()
+    
+    if paused:
+        screen.fill((255,255,255))
+        pauserec = pauseserf.get_rect(center=(width/2, height/2))
+        screen.blit(pauseserf, pauserec)
+        pygame.display.update()
 
 def fade_text(text_surface, fade_speed=2):
     # Create a copy of the text surface
@@ -193,7 +285,6 @@ def gameover(whowins, score_to_win):
         screen.blit(winner, winnerrect)
         pygame.display.update()
 
-
 def defaultmain(score_to_win):
     n = 1
     mainmenumusic.play(loops=-1)
@@ -219,7 +310,8 @@ def defaultmain(score_to_win):
                         mainmenumusic.stop()
                         human_game_loop(score_to_win)
                     if player1.is_over(pos):
-                        ...
+                        mainmenumusic.stop()
+                        ai_game_loop(score_to_win)
                         
         n+=10
         player1.draw(screen)
@@ -322,7 +414,7 @@ class Paddle:
         elif self.y > height - self.height / 2:
             self.y = height - self.height / 2
             self.vy = 0
-            
+
     def draw(self):
         pygame.draw.rect(screen, self.color, [self.get_x_low(), self.get_y_low(), self.width, self.height],
                          self.border_width)
@@ -397,18 +489,23 @@ class Ball:
         
         
     def account_for_paddle_collision(self, paddle: Paddle) -> None:
-        """
-        Assumes the ball is relatively slow (i.e. won't clip through)
-        Also does not use i-frames (i.e. collision could occur multiple times for a collision)
-        Simply negates ball
-        """
-
         if not self.does_collide(paddle):
-            return 
+            return
 
-        # Negates x velocity, if collides with a paddle
+        # Negate horizontal velocity to change the direction of the ball
         self.vx = -self.vx
-        self.vy += paddle.vy
+
+        # Calculate the distance from the paddle's center to the ball's center
+        distance_from_center = self.y - paddle.y
+
+        # Adjust the ball's position based on the distance from the paddle's center
+        self.y = paddle.y + distance_from_center
+
+        # Ensure the ball's position stays within the screen boundaries
+        if self.y < self.radius:
+            self.y = self.radius
+        elif self.y > height - self.radius:
+            self.y = height - self.radius
 
     def account_for_vertical_screen_collision(self):
         if self.get_y_low() < 0:
@@ -528,6 +625,47 @@ class Button(pygame.sprite.Sprite):
             if pos[1] > self.y and pos[1] < self.y + self.height:
                 return True
         return False
+
+class AIPlayer:
+    def __init__(self, x, y, paddle_width, paddle_height, speed, up_key, down_key, color=(255, 255, 255),
+                 border_width=0):
+        self.paddle = Paddle(x=x, y=y, paddle_width=paddle_width, paddle_height=paddle_height, speed=speed,
+                            up_key=up_key, down_key=down_key, color=color,
+                             border_width=border_width)
+
+    def update(self, dt, ball):
+    # Calculate the predicted position where the ball will intersect with the AI's side of the screen
+        predicted_ball_y = ball.y + (ball.y - self.paddle.y) * (self.paddle.x - ball.x) / ball.vx
+
+        # Move the AI paddle towards the predicted position
+        acceleration = self.paddle.speed + 800
+        deceleration = 800 
+
+        if predicted_ball_y < self.paddle.y:
+            self.paddle.vy -= acceleration * dt
+        elif predicted_ball_y > self.paddle.y:
+            self.paddle.vy += acceleration * dt
+        else:
+            if self.paddle.vy > 0:
+                self.paddle.vy -= deceleration * dt
+            elif self.paddle.vy < 0:
+                self.paddle.vy += deceleration * dt
+
+        self.paddle.vy *= 0.5**dt 
+
+        self.paddle.y += self.paddle.vy * dt
+
+        # Ensure the AI paddle stays within the screen boundaries
+        if self.paddle.y < self.paddle.height / 2:
+            self.paddle.y = self.paddle.height / 2
+            self.paddle.vy = 0
+        elif self.paddle.y > height - self.paddle.height / 2:
+            self.paddle.y = height - self.paddle.height / 2
+            self.paddle.vy = 0
+
+        self.paddle.draw()
+    def draw(self):
+        self.paddle.draw()
 
 # Call the game loop, with some initial amount. 
 mainmenu(2)
