@@ -515,8 +515,11 @@ class Ball:
         if not self.does_collide(paddle):
             return
 
-        # Negate horizontal velocity to change the direction of the ball
-        self.vx = -self.vx
+        # Modify x velocity based on which paddle the ball collides with
+        if paddle.get_x_low() < self.x < paddle.x:
+            self.vx = abs(self.vx)  # Collided with the left paddle, set x velocity to its absolute value
+        elif paddle.x < self.x < paddle.get_x_high():
+            self.vx = -abs(self.vx)  # Collided with the right paddle, set x velocity to its negated absolute value
 
         # Calculate the distance from the paddle's center to the ball's center
         distance_from_center = self.y - paddle.y
@@ -541,6 +544,9 @@ class Ball:
             self.y = self.radius
         elif self.y > height - self.radius:
             self.y = height - self.radius
+
+
+        
 
     def reset_speed_and_angle(self):
         # Reset speed and angle to their initial values
