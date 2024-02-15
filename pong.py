@@ -1,6 +1,6 @@
 from ast import main
 import glob
-from math import sin
+import math
 import pygame
 import random
 import os
@@ -219,6 +219,9 @@ def countdown():
 def pause():
     global paused
     for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_p:
                 paused = not paused
@@ -229,6 +232,7 @@ def pause():
             elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 quit()
+
     
     if paused:
         screen.fill((255,255,255))
@@ -250,6 +254,7 @@ def fade_text(text_surface, fade_speed=2):
         pygame.time.delay(20)
 
 def gameover(whowins, score_to_win):
+    pygame.mixer.music.stop()
     screen.fill((0,0,0))
     font_size1 = 32
     font1 = pygame.font.Font('font/Pixeltype.ttf', font_size1)
@@ -271,7 +276,8 @@ def gameover(whowins, score_to_win):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 if replay.is_over(pos):
-                    mainmenu(score_to_win)
+                    gameovermusic.stop()
+                    defaultmain(score_to_win)
                     
         replay = Button(350, height/2, 100, 40, 10, (255, 255, 255), 'replay', font1, (0,0,0))
 
@@ -287,7 +293,6 @@ def gameover(whowins, score_to_win):
 
 def defaultmain(score_to_win):
     n = 1
-    mainmenumusic.play(loops=-1)
     font_size1 = 32
     font1 = pygame.font.Font('font/Pixeltype.ttf', font_size1)
     font_size2 = 64
@@ -295,7 +300,7 @@ def defaultmain(score_to_win):
     while True:
         screen.fill((0, 0, 0))
         pongserf = font2.render("PONG", False, (255, 255, 255))
-        rotated_pongserf = pygame.transform.rotate(pongserf, sin(n)) 
+        rotated_pongserf = pygame.transform.rotate(pongserf, math.sin(n)) 
         screen.blit(rotated_pongserf, (350, 100))
 
         player1 = Button(150, height/2, 100, 40, 10, (255, 255, 255), '1 Player', font1, (0,0,0))
@@ -304,6 +309,10 @@ def defaultmain(score_to_win):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        quit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     if player2.is_over(pos):
@@ -328,7 +337,7 @@ def mainmenu(score_to_win):
     while True:
         screen.fill((0, 0, 0))
         pongserf = font2.render("PONG", False, (255, 255, 255))
-        rotated_pongserf = pygame.transform.rotate(pongserf, sin(n)) 
+        rotated_pongserf = pygame.transform.rotate(pongserf, math.sin(n)) 
         screen.blit(rotated_pongserf, (350, 100))
 
         start = Button(350, height/2, 100, 40, 10, (255, 255, 255), 'start', font1, (0,0,0))
@@ -339,7 +348,6 @@ def mainmenu(score_to_win):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
                     if start.is_over(pos):
-                        mainmenumusic.stop()
                         defaultmain(score_to_win)
         n+=10
         start.draw(screen)
@@ -450,12 +458,15 @@ class Ball:
         self.initialx =speed_x
         self.vx = speed_x 
         self.vy = self.vx * random.uniform(1, 2)
+        self.initial_vy_ratio = random.uniform(1, 2)
         self.speed_increase_rate = 0.1
 
         # Initialize radius, speed_x, color, and border_width class variables. 
         self.radius = radius
         self.color = color
         self.border_width = border_width
+        self.trail_particle_systems = []
+
 
     def update(self, dt, *, paddle_left, paddle_right):
         self.move(dt)
@@ -464,6 +475,14 @@ class Ball:
         self.vx += self.speed_increase_rate * dt
         self.account_for_paddle_collision(paddle_right)
         self.account_for_paddle_collision(paddle_left)
+        self.trail_particle_systems.append(ParticleSystem((self.x, self.y), 1, (255, 255, 255)))
+
+        # Update existing particle systems in the trail
+        for particle_system in self.trail_particle_systems:
+            particle_system.update()
+
+        # Keep only the last 100 particle systems in the trail to avoid memory overflow
+        self.trail_particle_systems = self.trail_particle_systems[-100:]
         self.draw()
 
 
@@ -485,7 +504,11 @@ class Ball:
     def draw(self):
         # Draw a pygame circle, with the self.color, self.x, self.y, self.radius, and self.border_width
         #   use the (global) screen variable. 
+        for particle_system in self.trail_particle_systems:
+            particle_system.draw(screen)
+        
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius, self.border_width)
+
         
         
     def account_for_paddle_collision(self, paddle: Paddle) -> None:
@@ -497,15 +520,32 @@ class Ball:
 
         # Calculate the distance from the paddle's center to the ball's center
         distance_from_center = self.y - paddle.y
+        bounce_factor = 0.2  # Adjust this factor to control the influence of distance_from_center  
 
-        # Adjust the ball's position based on the distance from the paddle's center
-        self.y = paddle.y + distance_from_center
+        # Normalize the distance to a value between -1 and 1
+        normalized_distance = distance_from_center / (paddle.height * bounce_factor)
+
+        # Adjust the angle of reflection based on the normalized distance
+        angle = normalized_distance * (math.pi / 4)  # Adjust the coefficient to change the bounce angle
+
+        # Calculate the new velocity components based on the angle
+        new_vx = self.vx * math.cos(angle) - self.vy * math.sin(angle)
+        new_vy = self.vx * math.sin(angle) + self.vy * math.cos(angle)
+
+        # Update the velocity components
+        self.vx = new_vx
+        self.vy = new_vy
 
         # Ensure the ball's position stays within the screen boundaries
         if self.y < self.radius:
             self.y = self.radius
         elif self.y > height - self.radius:
             self.y = height - self.radius
+
+    def reset_speed_and_angle(self):
+        # Reset speed and angle to their initial values
+        self.vx = self.initialx
+        self.vy = self.initialx * self.initial_vy_ratio
 
     def account_for_vertical_screen_collision(self):
         if self.get_y_low() < 0:
@@ -543,6 +583,8 @@ class Ball:
         # This is why we initialized x_value_to_reset_to and y_value_to_reset_to!
         self.x = self.x_value_to_reset_to
         self.y = self.y_value_to_reset_to
+        self.reset_speed_and_angle()
+
 
     def does_collide(self, paddle):
         # Try and understand what's happening here. 
@@ -593,10 +635,6 @@ class Ball:
     def set_y_high(self, num):
         self.y = num - self.radius
 
-class Particles:
-    def __init__(self):
-        ...
-
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, radius, color, text, font, text_color):
         super().__init__()  # Call superclass constructor
@@ -634,8 +672,9 @@ class AIPlayer:
                              border_width=border_width)
 
     def update(self, dt, ball):
-    # Calculate the predicted position where the ball will intersect with the AI's side of the screen
         predicted_ball_y = ball.y + (ball.y - self.paddle.y) * (self.paddle.x - ball.x) / ball.vx
+
+        predicted_ball_y += random.uniform(-75, 75)
 
         # Move the AI paddle towards the predicted position
         acceleration = self.paddle.speed + 800
@@ -667,5 +706,48 @@ class AIPlayer:
     def draw(self):
         self.paddle.draw()
 
-# Call the game loop, with some initial amount. 
+class Particle:
+    def __init__(self, position, color, lifespan, fade_rate):
+        self.x, self.y = position
+        # Validate the color argument
+        if isinstance(color, tuple) and len(color) == 3:
+            # Ensure each component is within the valid range of 0 to 255
+            self.color = tuple(max(0, min(255, c)) for c in color)
+        else:
+            # Default to white if color argument is invalid
+            self.color = (255, 255, 255)
+        self.radius = 2
+        self.vx = random.uniform(-1, 1)
+        self.vy = random.uniform(-1, 1)
+        self.gravity = 0.1
+        self.lifespan = lifespan  # Decrease lifespan to make particles disappear faster
+        self.fade_rate = fade_rate  # Increase fade rate to make particles fade faster
+
+    def update(self):
+        self.vy += self.gravity
+        self.x += self.vx
+        self.y += self.vy
+        self.lifespan -= 1
+
+    def draw(self, screen):
+        alpha = max(0, min(255, int(self.lifespan * self.fade_rate)))  # Ensure alpha is 0-255
+        color_with_alpha = (self.color[0], self.color[1], self.color[2], alpha)
+        pygame.draw.circle(screen, color_with_alpha, (int(self.x), int(self.y)), self.radius)
+
+class ParticleSystem:
+    def __init__(self, position, num_particles, color):
+        self.position = position
+        self.num_particles = num_particles
+        self.color = color
+        self.particles = [Particle(position, color, 25, 200) for _ in range(num_particles)]
+
+    def update(self):
+        for particle in self.particles:
+            particle.update()
+
+    def draw(self, screen):
+        for particle in self.particles:
+            particle.draw(screen)
+            
+#  Call the game loop, with some initial amount. 
 mainmenu(2)
