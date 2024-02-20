@@ -36,6 +36,7 @@ def human_game_loop(score_required_to_win):
     first_time = True
     countdownyes = False
     ballspeed = 150
+    # muted = False
 
     # Use pygame.K_UP & pygame.K_DOWN for right paddle, and 
     #   pygame.K_w and pygame.K_s for left paddle
@@ -71,6 +72,14 @@ def human_game_loop(score_required_to_win):
                             game_active = True
                             first_time = False
                             countdownyes = False
+                    # elif event.key == pygame.K_m:
+                    #     if not muted:
+                    #         pygame.mixer.music.set_volume(0)
+                    #         muted = True
+                    #     elif muted:
+                    #         pygame.mixer.music.set_volume(100)
+                    #         muted = False
+                
 
             # Draw background 
             draw_background()
@@ -110,6 +119,7 @@ def ai_game_loop(score_required_to_win):
     game_active = False
     first_time = True
     countdownyes = False
+    # muted = False
     ballspeed = 150
 
     # Use pygame.K_UP & pygame.K_DOWN for right paddle, and 
@@ -145,6 +155,13 @@ def ai_game_loop(score_required_to_win):
                             game_active = True
                             first_time = False
                             countdownyes = False
+                    # elif event.key == pygame.K_m:
+                    #     if not muted:
+                    #         pygame.mixer.music.set_volume(0)
+                    #         muted = True
+                    #     elif muted:
+                    #         pygame.mixer.music.set_volume(100)
+                    #         muted = False
 
             # Draw background 
             draw_background()
@@ -232,6 +249,13 @@ def pause():
             elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 quit()
+            # elif event.key == pygame.K_m:
+            #     if not muted:
+            #         pygame.mixer.music.set_volume(0)
+            #         muted = True
+            #     elif muted:
+            #         pygame.mixer.music.set_volume(100)
+            #         muted = False
 
     
     if paused:
@@ -292,6 +316,7 @@ def gameover(whowins, score_to_win):
         pygame.display.update()
 
 def defaultmain(score_to_win):
+    # muted = False
     n = 1
     font_size1 = 32
     font1 = pygame.font.Font('font/Pixeltype.ttf', font_size1)
@@ -305,6 +330,7 @@ def defaultmain(score_to_win):
 
         player1 = Button(150, height/2, 100, 40, 10, (255, 255, 255), '1 Player', font1, (0,0,0))
         player2 = Button(550, height/2, 100, 40, 10, (255, 255, 255), '2 Player', font1, (0,0,0))
+        # mute = Button(700, 450, 100, 50, 10, (255, 255, 255), 'Mute', font1, (0,0,0))
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -321,13 +347,23 @@ def defaultmain(score_to_win):
                     if player1.is_over(pos):
                         mainmenumusic.stop()
                         ai_game_loop(score_to_win)
+                    # if mute.is_over(pos):
+                    #     if not muted: 
+                    #         mainmenumusic.set_volume(0)
+                    #         muted = True
+                    #     elif muted:
+                    #         mainmenumusic.set_volume(100)
+                    #         muted = False
+
                         
         n+=10
         player1.draw(screen)
         player2.draw(screen)
+        # mute.draw(screen)
         pygame.display.update()
 
 def mainmenu(score_to_win):
+    # muted = False
     n = 1
     mainmenumusic.play(loops=-1)
     font_size1 = 32
@@ -341,6 +377,7 @@ def mainmenu(score_to_win):
         screen.blit(rotated_pongserf, (350, 100))
 
         start = Button(350, height/2, 100, 40, 10, (255, 255, 255), 'start', font1, (0,0,0))
+        # mute = Button(700, 450, 100, 50, 10, (255, 255, 255), 'Mute', font1, (0,0,0))
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -349,8 +386,16 @@ def mainmenu(score_to_win):
                     pos = pygame.mouse.get_pos()
                     if start.is_over(pos):
                         defaultmain(score_to_win)
+                    # if mute.is_over(pos):
+                    #     if not muted: 
+                    #         mainmenumusic.set_volume(0)
+                    #         muted = True
+                    #     elif muted:
+                    #         mainmenumusic.set_volume(100)
+                    #         muted = False
         n+=10
         start.draw(screen)
+        # mute.draw(screen)
         pygame.display.update()
 
 class Paddle:
